@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 #
 # A *bookmark server* or URI shortener that maintains a mapping (dictionary)
 # between short names and long URIs, checking that each new URI added to the
@@ -41,6 +41,7 @@
 import http.server
 import requests
 from urllib.parse import unquote, parse_qs
+import os
 
 memory = {}
 
@@ -143,6 +144,7 @@ class Shortener(http.server.BaseHTTPRequestHandler):
             self.wfile.write("The uri is not valid".encode())
 
 if __name__ == '__main__':
-    server_address = ('', 8000)
+    port = int(os.environ.get('PORT', 8000)
+    server_address = ('', port)
     httpd = http.server.HTTPServer(server_address, Shortener)
     httpd.serve_forever()
