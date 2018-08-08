@@ -1,0 +1,45 @@
+Http.server module has a built-in demo server.
+But the demo server is just that — a demonstration of the module's abilities. Just serving static files out of a directory is hardly the only thing you can do with HTTP. In this lesson, you'll build a few different web services using http.server, and learn more about HTTP at the same time. You'll also use another module, requests, to write code that acts as an HTTP client.
+
+web server in http.server has 2 parts:
+	HTTPServer class	and	request handler class
+
+HTTPServer built into the module and same for every web service. It receives a request and hands that request to request handler(different for different services)
+
+GET /search?q=gray+squirrel&tbm=isch HTTP/1.1
+Host: www.google.com
+Here, the query part of the uri is the one after ? mark.
+
+urllib.parse package knows how to unpack queries.(doesn't work on all uris though)
+urlparse and parse_qs functions (qs means query string)
+
+Example:
+>>> from urllib.parse import urlparse, parse_qs
+>>> address = 'https://www.google.com/search?q=gray+squirrel&tbm=isch'
+>>> parts = urlparse(address)
+>>> print(parts)
+ParseResult(scheme='https', netloc='www.google.com', path='/search', params='', query='q=gray+squirrel&tbm=isch', fragment='')
+>>> print(parts.query)
+q=gray+squirrel&tbm=isch
+>>> query = parse_qs(parts.query)
+>>> query
+{'q': ['gray squirrel'], 'tbm': ['isch']}	(Returns a dictionary of lists)
+
+mostly query parameters enter uri when user submits a form.
+
+GET method:- allows bookmarking url(as parameters are in the url itself). Also is not good for submitting information as they may get duplicated(idempotency), if you reload the page many times then the form information is going to be submitted that many times. But good for displaying messages from the server as that can be bookmarked by the browser.
+
+POST method:
+When a browser submits a form as a POST request, it doesn't encode the form data in the URI path, the way it does with a GET request. Instead, it sends the form data in the request body, underneath the headers. The request also includes Content-Type and Content-Length headers, which we've previously only seen on HTTP responses.
+
+self.headers acts much like python dictionary to access request header. However, it treats everything as a string, even a number.
+in an HTTP request, it's also possible that the body will be empty, in which case the browser might not send a Content-length header at all.
+
+
+post-redirect-get:- Design pattern for web applications
+A client POSTs to a server to create or update a resource; on success, the server replies not with a 200 OK but with a 303 redirect. The redirect causes the client to GET the created or updated resource.
+One big advantage of Post-Redirect-Get is that as a user, every page you actually see is the result of a GET request, which means you can bookmark it, reload it, and so forth — without ever accidentally resubmitting a form. 
+
+Bookmark server:
+url shortening as short urls are easy to be bookmarked.
+

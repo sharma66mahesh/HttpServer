@@ -1,0 +1,75 @@
+ foo://example.com:8042/over/there?name=ferret#nose
+ \_/   \______________/\_________/ \_________/ \__/
+  |           |            |            |        |
+scheme     authority               path               query        fragmet           (fragment not passed to server)
+  |   _____________________|__
+ / \ /                        \
+ urn:example:animal:ferret:nose
+
+The URI authority part in itself can be composed of up to 3 parts.
+
+john:doe@example.com:8042
+\______/ \_________/ \__/
+    |         |        |
+userinfo    host     port
+
+
+
+python3 has static server on its http.server module
+start python server:
+	python3 -m http.server 8000
+Then in browser:
+	localhost:8000
+The directory server on the localhost is the one that you were while starting up the server.
+
+ncat and netcat are not the same!!!!
+
+ncat google.com 80
+	-connect to google.com on port 80. Then you can send get requests by hand
+
+ncat -l 9999
+	listen on port 9999	(no need to run any other server)
+
+ncat is used to send request by hand. use the following command to do that:
+	ncat 127.0.0.1 8000
+		to connect to your web server. Then type the following two commands.
+			GET / HTTP/1.1
+			Host: localhost 		(press enter twice here)
+		The response from the server(containing html, css, js) will be displayed on your terminal
+
+
+(status code)404 error: Is "not found error"
+
+The HTTP response is made up of three parts: the status line, some headers(case insensitive), and a response body.
+The status line is the first line of text that the server sends back. The headers are the other lines up until the first blank line. The response body is the rest — in this case, it's a piece of HTML.
+
+Status codes on the status line:
+
+    	1xx — Informational. The request is in progress or there's another step to take.
+    	2xx — Success! The request succeeded. The server is sending the data the client asked 	for.
+    	3xx — Redirection. The server is telling the client a different URI it should redirect to. The 	headers 	will usually contain a Location header with the updated URI. Different codes tell 	the client whether a redirect is permanent or temporary.(browsers will automatically detect this and will redirect to the specified uri)
+    	4xx — Client error. The server didn't understand the client's request, or can't or won't fill it. 		Different codes tell the client whether it was a bad URI, a permissions problem, or another 	sort of error.
+	    5xx — Server error. Something went wrong on the server side.
+
+utf-8 is the default for pyton text.
+
+content-length tells the length in bytes of the response body.
+
+run python server and then in terminal type:
+	ncat -l 9999
+Then open browser and type:
+	localhost:9999
+Then you see some request message from client being shown on your terminal. There type the following:
+	HTTP/1.1 307 Temporary Redirect
+	Location: https://www.eff.org/	(press enter twice)
+That's us(the server) giving instructions to the browser to redirect to www.eff.org
+		OR
+send type the following:
+	HTTP/1.1 200 OK
+	Content-type: text/plain
+	Content-length: 50
+
+	Hello, browser! I am a real HTTP server, honestly!
+	(don't forget the blank line space)
+
+

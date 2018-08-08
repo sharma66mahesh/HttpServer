@@ -1,0 +1,91 @@
+There's nothing fundamentally special about the computers that run web servers. They're just computers running an operating system such as Linux, Mac OS, or Windows (usually Linux). Their connection to the Internet is a little different from a typical home or mobile Internet connection, though. A server usually needs to have a stable (static) IP address so that clients can find it and connect to it. Most home and mobile systems don't assign your computer a static IP address.
+Also, most home Internet routers don't allow incoming connections by default. You would need to reconfigure your router to allow it. This is totally possible, but way beyond the scope of this course 
+Steps for deploying your code on a server:
+    Check your server code into a new local Git repository.
+    Sign up for a free Heroku account.
+    Download the Heroku command-line interface (CLI).
+    Authenticate the Heroku CLI with your account: heroku login
+    Create configuration files Procfile, requirements.txt, and runtime.txt
+    Modify your server to listen on a configurable port.
+    Create your Heroku app: heroku create your-app-name
+    Push your code to Heroku with Git: git push heroku master
+
+ The bookmark server from Lesson 2 listens on port 8000. But Heroku runs many users' processes on the same computer, and multiple processes can't (normally) listen on the same port. So Heroku needs to be able to tell your server what port to listen on.
+The way it does this is through an environment variable — a configuration variable that is passed to your server from the program that starts it, usually the shell. Python code can access environment variables in the os.environ dictionary. The names of environment variables are usually capitalized; and the environment variable we need here is called, unsurprisingly, PORT.
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8000))   # Use PORT if it's there.
+    server_address = ('', port)
+    httpd = http.server.HTTPServer(server_address, Shortener)
+    httpd.serve_forever()
+
+I deployed in https://practiceserver7192.herokuapp.com
+When I tried to bookmark my own address https://practiceserver7192.herokuapp.com, it couldn't be saved. That was because that server can handle only one request at a time. So for solving that problem, we use the concurrency technique.
+
+NOTE: WE DON'T USE LOCALHOST ANYMORE. WE'LL USE THE MENTIONED WEBSITE ONLY.
+
+Being able to handle two ongoing tasks at the same time is called concurrency, and the basic http.server.HTTPServer doesn't have it. It's pretty straightforward to plug concurrency support into an HTTPServer, though. The Python standard library supports doing this by adding a mixin to the HTTPServer class. A mixin is a sort of helper class, one that adds extra behavior the original class did not have. To do this, you'll need to add this code to your bookmark server:
+
+import threading
+from socketserver import ThreadingMixIn
+
+class ThreadHTTPServer(ThreadingMixIn, http.server.HTTPServer):
+    "This is an HTTPServer that supports thread-based concurrency."
+
+Big companies don't use python's http server. They use servers like apache, nginx or microsoft iis. They can also provide access control, allowing only authenticated users to download particular static content.
+
+Some web applications need to do a lot of work on the server side for each request, and need many servers to handle the load. Splitting requests up among several servers is called load balancing.
+Load balancing also helps handle conditions where one server becomes unavailable, allowing other servers to pick up the slack. A reverse proxy can health check the backend servers, only sending requests to the ones that are currently up and running. This also makes it possible to do updates to the backend servers without having an outage.
+
+Web systems can perform caching in a number of places — but all of them are under control of the server that serves up a particular resource. That server can set HTTP headers indicating that a particular resource is not intended to change quickly, and can safely be cached.
+There are a few places that caching usually can happen. Every user's browser maintains a browser cache of cacheable resources — such as images from recently-viewed web pages. The browser can also be configured to pass requests through a web proxy, which can perform caching on behalf of many users. Finally, a web site can use a reverse proxy to cache results so they don't need to be recomputed by a slower application server or database.
+
+Why serve static requests out of cache (or a static web server) rather than out of your application server? Python code is totally capable of sending images or video via HTTP, after all. The reason is that — all else being equal — handling a request faster provides a better user experience, but also makes it possible for your service to support more requests. (all because of capacity)
+
+cookies--  there are 'cookie' and 'set-cookie' in http header for cookies. Cookies are stored by browsers.
+Cookies are used for keeping users logged-in, tracking user for advertisement and sometimes for storing user preferences.
+
+How cookies happen:
+The first time the client makes a request to the server, the server sends back the response with a Set-Cookie header. This header contains three things: a cookie name, a value, and some attributes. Every subsequent time the browser makes a request to the server, it will send that cookie back to the server. The server can update cookies, or ask the browser to expire them.
+
+cookie-fields:(see them on your browser)
+name and content:- like key-value pair. They are sent to the browser.
+domain and path:- domain name and the path in the domain name
+send for(secure):- boolean. send for https and http both or for https only. If set, uses HTTPS.
+accessible to script(HttpOnly):- boolean. code accessible to javascript script running on the page or not. If set then not accessible to JS script.
+created:- created date
+expires:- expiry date. server wants browser to stop saving that cookie from now on.There are two different ways a server can set this: it can set an Expires field with a specific date and time, or a Max-Age field with a number of seconds. If no expiration field is set, then a cookie is expired when the browser closes.
+
+Be aware that a request might not have a cookie on it, in which case accessing the Cookie header will raise a KeyError exception; or the cookie might not be valid, in which case the SimpleCookie constructor will raise http.cookies.CookieError.
+
+ A DNS domain links a particular hostname to a computer's IP address. But it also indicates that the owner of that domain intends for that computer to be treated as part of that domain.
+
+Imagine what a bad guy could do if they could convince your browser that their server evilbox was part of (say) Facebook, and get you to request a Facebook URL from evilbox instead of from Facebook's real servers. Your browser would send your facebook.com cookies to evilbox along with that request. But these cookies are what prove your identity to Facebook … so then the bad guy could use those cookies to access your Facebook account and send spam messages to all your friends.
+    Important safety tip: Even though browsers make it difficult for users to modify cookies, it's possible for a user to modify a cookie value. Higher-level web toolkits, such as Flask (in Python) or Rails (in Ruby) will cryptographically sign your cookies so that they won't be accepted if they are modified. Quite often, high-security web applications use a cookie just to store a session ID, which is a key to a server-side database containing user information.
+
+    Another important safety tip: If you're displaying the cookie data as HTML, you need to be careful to escape any HTML special characters that might be in it. An easy way to do this in Python is to use the html.escape function, from the built-in html module!
+
+
+When a browser and a server speak HTTPS, they're just speaking HTTP, but over an encrypted connection. The encryption follows a standard protocol called Transport Layer Security, or TLS for short. TLS provides some important guarantees for web security:
+
+    It keeps the connection private by encrypting everything sent over it. Only the server and browser should be able to read what's being sent.
+    It lets the browser authenticate the server. For instance, when a user accesses https://www.udacity.com/, they can be sure that the response they're seeing is really from Udacity's servers and not from an impostor.
+    It helps protect the integrity of the data sent over that connection — checking that it has not been (accidentally or deliberately) modified or replaced.
+
+    Note: TLS is also very often referred to by the older name SSL (Secure Sockets Layer). Technically, SSL is an older version of the encryption protocol. This course will talk about TLS because that's the current standard.
+
+The server-side configuration for TLS includes two important pieces of data: a private key and a public certificate. The private key is secret; it's held on the server and never leaves there. The certificate is sent to every browser that connects to that server via TLS. These two pieces of data are mathematically related to each other in a way that makes the encryption of TLS possible.
+
+The server's certificate is issued by an organization called a certificate authority (CA). The certificate authority's job is to make sure that the server really is who it says it is — for instance, that a certificate issued in the name of Heroku is actually being used by the Heroku organization and not by someone else.
+
+The data in the TLS certificate and the server's private key are mathematically related to each other through a system called public-key cryptography
+
+How does TLS assure authentication?
+
+A server certificate indicates that an encryption key belongs to a particular organization responsible for that service. It's the job of a certificate authority to make sure that they don't issue a cert for (say) udacity.com to someone other than the company who actually runs that domain.
+
+But the cert also contains metadata that says what DNS domain the certificate is good for. The cert in the picture above is only good for sites in the .herokuapp.com domain. When the browser connects to a particular server, if the TLS domain metadata doesn't match the DNS domain, the browser will reject the certificate and put up a big scary warning to tell the user that something fishy is going on.("Your connection is not private")
+
+How does TLS assure integrity?
+
+Every request and response sent over a TLS connection is sent with a message authentication code (MAC) that the other end of the connection can verify to make sure that the message hasn't been altered or damaged in transit.
+
